@@ -1,4 +1,4 @@
-# Pixel HQ — Mission Control
+# Sim HQ — Mission Control
 
 A single-file dashboard for all projects: **ProofBase**, **QuoteBake**, **Furbase**,
 **Driving App** and **Aisle**. It lives in this repo because the old Aisle wedding
@@ -10,7 +10,7 @@ Open `index.html` in a browser — no build step, no server, no dependencies.
 
 | Panel | What it does |
 |---|---|
-| **The Office** | Habbo-style isometric pixel room. One desk per project; agents type when a project is in active development, idle when it's live, sleep when it's an idea. Click a desk for quick links into that project. There is also a cat. |
+| **The Office** | Sims-style isometric room — sunny lot, plumbobs and all. One desk per project; agents type when a project is in active development, idle when it's live, sleep when it's an idea. Click a desk for quick links into that project. There is also a cat. |
 | **Projects** | Card per project with status, current phase, and buttons into the app, its **admin panel**, Supabase/Stripe/Vercel dashboards and the GitHub repo. Click *✎ edit links* to fix any URL — overrides persist. |
 | **To-dos** | One list across every project, grouped by project, seeded with the real outstanding work (QuoteBake Phases 4–6, ProofBase CI secrets, etc.). Add / tick / delete; persisted. |
 | **Claude usage left** | Session (5h window) + weekly bars with live reset countdowns. There's no public usage API, so it's a manual tracker — click **edit** and copy the numbers from `/status` in Claude Code. |
@@ -20,7 +20,7 @@ Open `index.html` in a browser — no build step, no server, no dependencies.
 ## Data
 
 Everything you change (todos, stats, usage, campaigns, link overrides) is stored in
-`localStorage` under `pixelhq-state-v1` — per-browser, nothing leaves your machine.
+`localStorage` under `pixelhq-state-v1` (kept from v1 so nothing is lost) — per-browser, nothing leaves your machine.
 To reset to seeds: `localStorage.removeItem('pixelhq-state-v1')` in the console.
 
 Project definitions (names, colours, links, status) are in the `PROJECTS` array at
