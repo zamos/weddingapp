@@ -1,0 +1,12 @@
+{
+  "name": "hq-galaxy",
+  "version": "2.0.0",
+  "private": true,
+  "description": "HQ Galaxy — mission-control dashboard for all projects. Zero dependencies.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>HQ Galaxy — Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Exo+2:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>HQ&nbsp;GALAXY</h1>
+        <div class="sub">mission control · sector ZM-05</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#office">Map</a>
+      <a href="#projects">Systems</a>
+      <a href="#todos">Missions</a>
+      <a href="#stats">Telemetry</a>
+      <a href="#marketing">Transmissions</a>
+    </nav>
+    <div class="hdr-tools">
+      <span class="sync-dot" id="syncDot" title="data sync status"></span>
+      <div class="usage-chip" id="usageChip" title="Claude fuel">
+        <span>FUEL</span>
+        <div class="mini-bar"><i id="chipBar"></i></div>
+        <b id="chipPct">—</b>
+      </div>
+      <button class="icon-btn" id="bridgeBtn" title="The Bridge — run prompts (`)">⌨</button>
+      <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+    </div>
+  </div>
+</header>
+<div id="modeBanner">⚠ companion server offline — static mode: GitHub sync works, prompts open claude.ai, usage is manual. Run <code>npm start</code> in the repo for full power.</div>
+
+<div class="wrap">
+
+  <!-- ============ GALAXY MAP ============ -->
+  <section id="office">
+    <div class="sec-h">
+      <h2>Galaxy Map</h2>
+      <span class="hint">drag to pan · scroll to zoom · planets are your links — click them · click a star to warp in</span>
+      <div class="right">
+        <button class="gx-btn ghost" id="resetCam">⌖ recenter</button>
+        <button class="gx-btn teal" id="addProjectBtn">+ new system</button>
+      </div>
+    </div>
+    <div class="gx-panel office" id="officePanel">
+      <canvas id="room"></canvas>
+      <div id="gxTip"></div>
+      <div id="sysBar">
+        <div class="who">
+          <h3 id="sysName"></h3>
+          <div class="st" id="sysStatus"></div>
+          <div class="actions" id="sysActions"></div>
+        </div>
+        <div id="sysFeed"><h4>Activity Feed</h4><div id="sysFeedList"></div></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <!-- ============ PROJECTS ============ -->
+  <section id="projects">
+    <div class="sec-h">
+      <h2>Charted Systems</h2>
+      <span class="hint">live GitHub / deploy data appears once tokens are set (⚙ Settings)</span>
+    </div>
+    <div class="projects" id="projectsGrid"></div>
+  </section>
+
+  <!-- ============ TODOS + USAGE ============ -->
+  <section id="todos">
+    <div class="sec-h">
+      <h2>Mission Log — all systems</h2>
+      <span class="hint">local missions + open GitHub issues</span>
+      <div class="right">
+        <button class="gx-btn ghost" id="clearDone">clear done</button>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="gx-panel" style="padding:18px">
+        <div class="todo-add">
+          <select id="todoProj"></select>
+          <input type="text" id="todoText" placeholder="Log a new mission… (enter to save)" />
+          <button class="gx-btn teal" id="todoAdd">+ log</button>
+        </div>
+        <div id="todoList"></div>
+      </div>
+
+      <div class="gx-panel usage-panel" id="usage">
+        <div class="sec-h" style="margin:0 0 4px">
+          <h2 style="font-size:13px;color:var(--ink)">Claude Fuel Reserves<span class="auto-tag" id="usageAutoTag" style="display:none">AUTO</span></h2>
+          <div class="right"><button class="gx-btn ghost" id="usageEdit">edit</button></div>
+        </div>
+        <div class="bars">
+          <div class="ubar" id="barSession"></div>
+          <div class="ubar" id="barWeekly"></div>
+        </div>
+        <div class="usage-note" id="usageNote">
+          Waiting for the companion server… with it running, fuel is read automatically from your
+          local Claude Code data. Without it, click <b>edit</b> and copy numbers from <code>/status</code>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section id="stats">
+    <div class="sec-h">
+      <h2>Telemetry</h2>
+      <span class="hint" id="statsHint">click numbers to edit · Stripe-linked systems update automatically when the server has a key</span>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+  </section>
+
+  <!-- ============ MARKETING ============ -->
+  <section id="marketing">
+    <div class="sec-h">
+      <h2>Transmissions</h2>
+      <span class="hint">marketing campaigns, broadcast channels and the idea backlog</span>
+    </div>
+    <div class="mkt">
+      <div class="gx-panel mkt-panel">
+        <h3>Campaigns</h3>
+        <div class="todo-add">
+          <select id="campProj"></select>
+          <input type="text" id="campText" placeholder="New campaign…" />
+          <button class="gx-btn teal" id="campAdd">+ add</button>
+        </div>
+        <div id="campList"></div>
+        <div class="usage-note" style="margin-top:10px">click a status pill to cycle planned → active → done</div>
+      </div>
+      <div>
+        <div class="gx-panel mkt-panel">
+          <h3>Broadcast Channels</h3>
+          <div id="channelList"></div>
+        </div>
+        <div class="gx-panel mkt-panel" style="margin-top:16px">
+          <h3>Idea Backlog</h3>
+          <div id="ideaList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="stars">✦ ✧ ✦ ✧ ✦</div>
+    HQ GALAXY · your data stays local (localStorage + companion server) · live long and ship often
+  </footer>
+</div>
+
+<!-- ============ THE BRIDGE ============ -->
+<div id="bridge">
+  <div class="bar" id="bridgeBar">
+    <h3>◈ The Bridge</h3>
+    <span class="stat" id="bridgeStat">run Claude prompts · start new projects · press `</span>
+    <span class="caret">▲</span>
+  </div>
+  <div class="body">
+    <div class="rowa">
+      <select id="bridgeProj"></select>
+      <select id="bridgeMode">
+        <option value="safe">mode: safe (accept edits)</option>
+        <option value="plan">mode: plan only</option>
+        <option value="full">mode: full power ⚠</option>
+      </select>
+      <button class="gx-btn teal" id="newProjBtn">🚀 new project</button>
+      <span class="stat" id="bridgeCwd" style="font-size:10.5px;color:var(--muted)"></span>
+      <button class="gx-btn red" id="bridgeKill" style="margin-left:auto;display:none">■ stop</button>
+    </div>
+    <div id="bridgeOut"><span class="sysline">◈ Bridge online. Pick a system, type a prompt, hit Run. Output streams here.</span></div>
+    <div class="rowb">
+      <textarea id="bridgePrompt" placeholder="Ask Claude to do something in the selected project… (Ctrl/Cmd+Enter to run)"></textarea>
+      <button class="gx-btn" id="bridgeRun" style="height:42px">▶ run</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-veil" id="settingsVeil">
+  <div class="gx-panel modal" id="settingsModal">
+    <button class="mclose" id="settingsClose">✕</button>
+    <h2>Settings</h2>
+    <div class="hintline">Everything is stored locally. Tokens never leave your machine.</div>
+
+    <h4>Systems (projects)</h4>
+    <div id="projList"></div>
+    <button class="gx-btn teal" id="projAddBtn">+ add system</button>
+    <label style="display:inline-flex;align-items:center;gap:8px;margin-left:14px;font-size:11px;color:var(--muted);letter-spacing:.08em;cursor:pointer">
+      <input type="checkbox" id="arrangeMode" style="accent-color:var(--cyan)"> ARRANGE MODE — drag stars on the map
+    </label>
+
+    <div id="projForm" style="display:none">
+      <h4 id="projFormTitle">Add system</h4>
+      <div class="frow"><label>Name</label><input type="text" id="pfName"></div>
+      <div class="frow"><label>Icon (emoji)</label><input type="text" id="pfIcon" maxlength="4" style="width:80px"></div>
+      <div class="frow"><label>Colour</label><input type="color" id="pfColor" value="#3fb4ff"></div>
+      <div class="frow"><label>Tagline</label><input type="text" id="pfTagline"></div>
+      <div class="frow"><label>Stack</label><input type="text" id="pfStack"></div>
+      <div class="frow"><label>Phase note</label><input type="text" id="pfPhase"></div>
+      <div class="frow"><label>GitHub repo</label><input type="text" id="pfRepo" placeholder="owner/name"></div>
+      <div class="frow"><label>App URL</label><input type="text" id="pfApp" placeholder="https://…"></div>
+      <div class="frow"><label>Admin URL</label><input type="text" id="pfAdmin" placeholder="https://…"></div>
+      <div class="frow"><label>Extra links</label><textarea id="pfLinks" rows="3" placeholder="one per line:  Label | https://url"></textarea></div>
+      <div class="frow"><label>Local folder</label><input type="text" id="pfPath" placeholder="/path/to/project (for Bridge prompt runs)"></div>
+      <div class="frow"><label>Vercel project</label><input type="text" id="pfVercel" placeholder="vercel project name (optional)"></div>
+      <div class="frow"><label>Stripe-linked</label><input type="checkbox" id="pfStripe" style="width:16px;height:16px;accent-color:var(--teal)"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="gx-btn teal" id="pfSave">save system</button>
+        <button class="gx-btn ghost" id="pfCancel">cancel</button>
+        <button class="gx-btn red" id="pfDelete" style="margin-left:auto;display:none">delete system</button>
+      </div>
+    </div>
+
+    <h4>Connections</h4>
+    <div class="tokrow"><label>GitHub token</label><input type="password" id="tokGithub" placeholder="fine-grained PAT — repo read access"><button class="gx-btn ghost" data-test="github">test</button><span class="tst" id="tstGithub"></span></div>
+    <div class="tokrow"><label>Vercel token</label><input type="password" id="tokVercel" placeholder="vercel.com/account/tokens"><button class="gx-btn ghost" data-test="vercel">test</button><span class="tst" id="tstVercel"></span></div>
+    <div class="hintline">GitHub: github.com → Settings → Developer settings → Fine-grained tokens → read-only access to your repos.
+    Stripe keys go in the server's <code>.env</code> file (never the browser) — see README.</div>
+
+    <h4>Fuel limits (tokens per window)</h4>
+    <div class="frow"><label>Session (5h)</label><input type="number" id="limSession"></div>
+    <div class="frow"><label>Weekly</label><input type="number" id="limWeekly"></div>
+    <div class="hintline">Plan limits aren't published, so gauges show usage against these estimates — tune until they match <code>/status</code>.</div>
+
+    <h4>Backup</h4>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="gx-btn" id="exportBtn">⬇ export JSON</button>
+      <button class="gx-btn ghost" id="importBtn">⬆ import JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="galaxy.js"></script>
+</body>
+</html>
