@@ -229,6 +229,11 @@ function autoPosition(){
 async function detectServer(){
   try{
     const r = await fetch(API+'/api/health',{signal:AbortSignal.timeout(2500)});
+    if(r.status===401 && location.protocol!=='file:'){
+      // password cookie expired — reload so the server shows its login page
+      location.reload();
+      return false;
+    }
     const j = await r.json();
     live.server = true; live.serverInfo = j;
   }catch(e){ live.server = false; live.serverInfo = null; }

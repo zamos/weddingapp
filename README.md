@@ -12,6 +12,10 @@ npm start          # zero dependencies — just Node 18+
 # open http://localhost:4560
 ```
 
+Want it running 24/7 on a home server instead? **[DEPLOY.md](DEPLOY.md)** is a complete
+beginner walkthrough for Proxmox (LXC container, systemd service, password protection,
+Tailscale remote access).
+
 Then in the dashboard: **⚙ Settings → Connections** and paste a GitHub token
 (github.com → Settings → Developer settings → Fine-grained tokens → read-only access to your
 repos). Optionally a Vercel token too. For Stripe revenue, `cp .env.example .env` and add

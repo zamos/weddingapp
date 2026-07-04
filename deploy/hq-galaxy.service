@@ -1,0 +1,17 @@
+[Unit]
+Description=HQ Galaxy mission control
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hq
+WorkingDirectory=/opt/hq-galaxy
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# claude CLI installs to ~/.local/bin for the hq user
+Environment=PATH=/home/hq/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=multi-user.target

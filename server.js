@@ -31,6 +31,9 @@ try {
 const env = k => process.env[k] || ENV[k] || '';
 
 const PORT = parseInt(env('PORT')) || 4560;
+const HOST = env('HOST') || '127.0.0.1';
+const PASSWORD = env('HQ_PASSWORD') || '';
+const COOKIE_TOKEN = PASSWORD ? crypto.createHash('sha256').update(PASSWORD).digest('hex') : '';
 const HOME = os.homedir();
 const PROJECTS_ROOT = env('PROJECTS_ROOT') || path.resolve(__dirname, '..');
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -56,6 +59,42 @@ function readBody(req) {
 function within(child, parent) {
   const rel = path.relative(path.resolve(parent), path.resolve(child));
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+/* ---------- auth (only active when HQ_PASSWORD is set in .env) ---------- */
+function safeEq(a, b) {
+  const A = Buffer.from(String(a)), B = Buffer.from(String(b));
+  return A.length === B.length && crypto.timingSafeEqual(A, B);
+}
+function isAuthed(req) {
+  if (!PASSWORD) return true;
+  const h = req.headers.authorization || '';
+  if (h.startsWith('Bearer ') && safeEq(h.slice(7), PASSWORD)) return true;
+  const m = /(?:^|;\s*)hq_tok=([^;]+)/.exec(req.headers.cookie || '');
+  if (m && safeEq(m[1], COOKIE_TOKEN)) return true;
+  return false;
+}
+function loginPage(res) {
+  res.writeHead(401, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
+  res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HQ Galaxy — locked</title><style>
+body{background:#03040c;color:#d8e6ff;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+.card{background:rgba(11,17,42,.9);border:1px solid rgba(110,170,255,.3);border-radius:16px;padding:34px 38px;text-align:center;box-shadow:0 0 40px rgba(63,180,255,.15)}
+h1{font-size:15px;letter-spacing:.35em;color:#9fd8ff;font-weight:600;margin:0 0 18px}
+input{background:#070d24;border:1px solid #2c4a7e;border-radius:9px;color:#d8e6ff;padding:10px 14px;font-size:14px;outline:none;width:220px}
+button{margin-top:12px;display:block;width:100%;background:rgba(63,180,255,.2);border:1px solid rgba(63,180,255,.55);border-radius:9px;color:#bfe4ff;padding:9px;font-size:13px;cursor:pointer}
+.err{color:#ff6b81;font-size:12px;height:16px;margin-top:8px}
+</style></head><body><form class="card" id="f">
+<h1>◈ HQ GALAXY</h1>
+<input type="password" id="pw" placeholder="password" autofocus autocomplete="current-password">
+<button>enter the galaxy</button><div class="err" id="e"></div>
+<script>
+document.getElementById('f').onsubmit=async ev=>{ev.preventDefault();
+  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({pw:document.getElementById('pw').value})});
+  if(r.ok) location.reload(); else document.getElementById('e').textContent='wrong password';
+};
+<\/script></form></body></html>`);
 }
 
 /* ---------- Claude usage (ccusage-style JSONL parsing) ---------- */
@@ -267,10 +306,35 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(204, {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type,x-vercel-token'
+          'Access-Control-Allow-Headers': 'Content-Type,x-vercel-token,Authorization'
         });
         return res.end();
       }
+      if (p === '/api/login' && req.method === 'POST') {
+        const b = await readBody(req);
+        if (PASSWORD && b.pw && safeEq(b.pw, PASSWORD)) {
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Set-Cookie': 'hq_tok=' + COOKIE_TOKEN + '; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return res.end('{"ok":true}');
+        }
+        return json(res, 401, { error: 'wrong password' });
+      }
+      if (!isAuthed(req)) return json(res, 401, { error: 'unauthorized' });
+      if (p === '/api/login' && req.method === 'POST') {
+        const b = await readBody(req);
+        if (PASSWORD && b.pw && safeEq(b.pw, PASSWORD)) {
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Set-Cookie': 'hq_tok=' + COOKIE_TOKEN + '; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax'
+          });
+          return res.end('{"ok":true}');
+        }
+        return json(res, 401, { error: 'wrong password' });
+      }
+      if (!isAuthed(req)) return json(res, 401, { error: 'unauthorized' });
       if (p === '/api/health') return json(res, 200, {
         ok: true, version: 2, projectsRoot: PROJECTS_ROOT,
         hasStripe: !!env('STRIPE_SECRET_KEY'), hasVercel: !!env('VERCEL_TOKEN'),
@@ -290,17 +354,25 @@ const server = http.createServer(async (req, res) => {
       if (p === '/api/new-project' && req.method === 'POST') return apiNewProject(res, await readBody(req));
       return json(res, 404, { error: 'unknown endpoint' });
     }
+    if (!isAuthed(req)) return loginPage(res);
     serveStatic(res, p);
   } catch (e) {
     try { json(res, 500, { error: e.message }); } catch (err) {}
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, HOST, () => {
   console.log('');
   console.log('  ◈ HQ GALAXY — mission control');
   console.log('  ──────────────────────────────');
-  console.log('  dashboard:      http://localhost:' + PORT);
+  console.log('  dashboard:      http://' + (HOST === '0.0.0.0' ? 'localhost' : HOST) + ':' + PORT);
+  if (HOST === '0.0.0.0') {
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) for (const n of nets[name] || [])
+      if (n.family === 'IPv4' && !n.internal) console.log('  on your LAN:    http://' + n.address + ':' + PORT);
+    if (!PASSWORD) console.log('  ⚠ WARNING:      reachable from your whole network with NO password — set HQ_PASSWORD in .env');
+  }
+  console.log('  password:       ' + (PASSWORD ? 'ON' : 'off (localhost only is fine without one)'));
   console.log('  projects root:  ' + PROJECTS_ROOT);
   console.log('  claude CLI:     ' + (CLAUDE_BIN || 'NOT FOUND — Bridge runs disabled'));
   console.log('  stripe key:     ' + (env('STRIPE_SECRET_KEY') ? 'loaded from .env' : 'not set'));
